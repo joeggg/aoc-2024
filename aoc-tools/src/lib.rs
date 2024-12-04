@@ -10,5 +10,5 @@ where
     let elapsed = start.elapsed().unwrap();
 
     print!("Part {}: {:?} ", part, result);
-    println!("\t(took {}ms)", elapsed.as_micros() as f64 / 1000.0);
+    println!("\t(took {}ms)\n", elapsed.as_micros() as f64 / 1000.0);
 }
