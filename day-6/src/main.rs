@@ -114,7 +114,6 @@ fn get_path_taken(
             visited_locations.push((guard_coords, guard_dir));
         }
     }
-    //print_map(map, &visited_locations);
     visited_locations
 }
 
@@ -125,10 +124,15 @@ fn get_number_loops(map: &[Vec<char>]) -> usize {
     let (obstacle_coords, guard_coords) = get_obstacle_and_guard_coords(map);
     let positions = get_path_taken(map, &obstacle_coords, guard_coords);
     let mut path_so_far = HashSet::new();
+    let mut visited_coords = HashSet::new();
 
     for (coords, dir) in positions {
-        if coords == guard_coords || loop_obstacles.contains(&coords) {
+        if coords == guard_coords
+            || loop_obstacles.contains(&coords)
+            || visited_coords.contains(&coords)
+        {
             path_so_far.insert((coords, dir));
+            visited_coords.insert(coords);
             continue;
         }
         // Imagine an obstacle is at coords, step back one and turn
@@ -142,10 +146,7 @@ fn get_number_loops(map: &[Vec<char>]) -> usize {
                 curr_dir = curr_dir.turn_right();
             } else if curr_path.contains(&(new_coords, curr_dir)) {
                 // Rejoining path already travelled
-                // TODO: fix weird check needed here to reduce the overestimate
-                if test_loop(map, &obstacle_coords, guard_coords, coords) {
-                    loop_obstacles.insert(coords);
-                }
+                loop_obstacles.insert(coords);
                 break;
             } else {
                 curr_coords = new_coords;
@@ -153,47 +154,9 @@ fn get_number_loops(map: &[Vec<char>]) -> usize {
             };
         }
         path_so_far.insert((coords, dir));
+        visited_coords.insert(coords);
     }
     loop_obstacles.len()
-}
-
-fn test_loop(
-    map: &[Vec<char>],
-    obstacle_coords: &HashSet<(usize, usize)>,
-    mut guard_coords: (usize, usize),
-    new_obstacle_coords: (usize, usize),
-) -> bool {
-    let max_i = map.len() as i64;
-    let max_j = map[0].len() as i64;
-    let mut curr_dir = Direction::Up;
-    let mut curr_path = HashSet::new();
-
-    // Project path to check for loop
-    while let Some(new_coords) = curr_dir.apply_move(&guard_coords, &max_i, &max_j) {
-        if obstacle_coords.contains(&new_coords) || new_coords == new_obstacle_coords {
-            curr_dir = curr_dir.turn_right();
-        } else if curr_path.contains(&(new_coords, curr_dir)) {
-            // Rejoining path already travelled
-            return true;
-        } else {
-            guard_coords = new_coords;
-            curr_path.insert((guard_coords, curr_dir));
-        };
-    }
-    false
-}
-
-fn print_map(map: &[Vec<char>], visited_positions: &HashSet<(usize, usize)>) {
-    for (i, row) in map.iter().enumerate() {
-        for (j, item) in row.iter().enumerate() {
-            if visited_positions.contains(&(i, j)) {
-                print!("X");
-            } else {
-                print!("{}", item);
-            }
-        }
-        println!();
-    }
 }
 
 fn read_input(filename: &str) -> Vec<Vec<char>> {
