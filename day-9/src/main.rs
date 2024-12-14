@@ -11,6 +11,102 @@ fn main() {
         },
         1,
     );
+    run_solution(
+        || {
+            let drive = get_drive_map(&data);
+            get_drive_checksum(&compact_drive(drive))
+        },
+        2,
+    );
+}
+
+#[derive(Debug)]
+struct File {
+    id: usize,
+    idx: usize,
+    size: usize,
+}
+
+#[derive(Debug)]
+struct Slot {
+    idx: usize,
+    size: usize,
+}
+
+// Answer too high currently
+fn compact_drive(mut drive: Vec<Option<usize>>) -> Vec<Option<usize>> {
+    let mut free_slots: Vec<Slot> = Vec::new();
+    let mut files: Vec<File> = Vec::new();
+    // Get location of files and slots
+    let mut slot_size = 0;
+    let mut file_size = 0;
+    let mut current_id = 0;
+    for (i, entry) in drive.iter().enumerate() {
+        match entry {
+            Some(file_id) => {
+                if slot_size != 0 {
+                    // If come from tracking a slot, push the slot
+                    free_slots.push(Slot {
+                        idx: i - slot_size,
+                        size: slot_size,
+                    });
+                    slot_size = 0;
+                } else if *file_id != current_id {
+                    // If file id changes, push current tracked file
+                    files.push(File {
+                        id: current_id,
+                        idx: i - file_size,
+                        size: file_size,
+                    });
+                    file_size = 0;
+                }
+                file_size += 1;
+                current_id = *file_id;
+            }
+            None => {
+                // If come from tracking a file, push the file
+                if file_size != 0 {
+                    files.push(File {
+                        id: current_id,
+                        idx: i - file_size,
+                        size: file_size,
+                    });
+                    file_size = 0;
+                }
+                slot_size += 1;
+            }
+        }
+    }
+    files.push(File {
+        id: current_id,
+        idx: drive.len() - file_size,
+        size: file_size,
+    });
+
+    //print_drive(&drive);
+    // For each file, go through each slot starting from the smallest
+    // until we find one big enough
+    for file in files.into_iter().rev() {
+        for i in 0..free_slots.len() {
+            let slot = &mut free_slots[i];
+            if slot.size >= file.size {
+                // Move file into slot, update slot to new remaining size
+                for i in 0..file.size {
+                    drive[file.idx + i] = None;
+                    drive[slot.idx + i] = Some(file.id);
+                }
+                slot.idx += file.size;
+                slot.size -= file.size;
+                if slot.size == 0 {
+                    free_slots.remove(i);
+                }
+                break;
+            }
+        }
+    }
+    //print_drive(&drive);
+
+    drive
 }
 
 fn compact_drive_fragmented(mut drive: Vec<Option<usize>>) -> Vec<Option<usize>> {
