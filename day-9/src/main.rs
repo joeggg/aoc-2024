@@ -4,12 +4,16 @@ use aoc_tools::run_solution;
 
 fn main() {
     let data = read_input("input.txt");
-    run_solution(|| get_checksum(&data), 1);
+    run_solution(
+        || {
+            let drive = get_drive_map(&data);
+            get_drive_checksum(&compact_drive_fragmented(drive))
+        },
+        1,
+    );
 }
 
-fn get_checksum(data: &[i8]) -> u64 {
-    let mut drive = get_drive(data);
-
+fn compact_drive_fragmented(mut drive: Vec<Option<usize>>) -> Vec<Option<usize>> {
     // Get indexes of all free slots, reverse order so we can pop to remove the earliest
     let mut free_slots: Vec<usize> = drive
         .iter()
@@ -49,18 +53,10 @@ fn get_checksum(data: &[i8]) -> u64 {
             drive[source] = None;
         }
     }
-
-    let mut checksum = 0;
-    for (i, entry) in drive.iter().enumerate() {
-        if let Some(file_id) = entry {
-            checksum += (i as u64) * (*file_id as u64);
-        }
-    }
-
-    checksum
+    drive
 }
 
-fn get_drive(data: &[i8]) -> Vec<Option<usize>> {
+fn get_drive_map(data: &[i8]) -> Vec<Option<usize>> {
     let mut drive: Vec<Option<usize>> = Vec::new();
     let mut file_id = 0;
 
@@ -78,6 +74,13 @@ fn get_drive(data: &[i8]) -> Vec<Option<usize>> {
     }
 
     drive
+}
+
+fn get_drive_checksum(drive: &[Option<usize>]) -> usize {
+    drive
+        .iter()
+        .enumerate()
+        .fold(0, |acc, (i, entry)| acc + i * entry.unwrap_or(0))
 }
 
 fn print_drive(drive: &[Option<usize>]) {
