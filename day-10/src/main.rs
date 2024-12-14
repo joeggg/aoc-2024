@@ -4,10 +4,11 @@ use aoc_tools::run_solution;
 
 fn main() {
     let map = read_input("input.txt");
-    run_solution(|| get_trailhead_scores(&map), 1);
+    run_solution(|| get_trailhead_scores(&map, false), 1);
+    run_solution(|| get_trailhead_scores(&map, true), 2);
 }
 
-fn get_trailhead_scores(map: &[Vec<u8>]) -> usize {
+fn get_trailhead_scores(map: &[Vec<u8>], use_trail_count: bool) -> usize {
     let mut trailhead_locations: Vec<(usize, usize)> = Vec::new();
 
     map.iter().enumerate().for_each(|(i, row)| {
@@ -22,11 +23,15 @@ fn get_trailhead_scores(map: &[Vec<u8>]) -> usize {
 
     for (i, j) in trailhead_locations {
         let trails = find_trails(map, i, j, Vec::new());
+        if use_trail_count {
+            total += trails.len()
+        } else {
+            let unique_finals: HashSet<&(usize, usize)> =
+                trails.iter().map(|trail| trail.last().unwrap()).collect();
+            total += unique_finals.len();
+        }
         //println!("Trailhead {:?}, {} trails", (i, j), trails.len());
-        let unique_finals: HashSet<&(usize, usize)> =
-            trails.iter().map(|trail| trail.last().unwrap()).collect();
         //print_trails(map, &trails);
-        total += unique_finals.len();
     }
 
     total
