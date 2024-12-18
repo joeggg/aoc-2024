@@ -5,29 +5,39 @@ use regex::Regex;
 
 fn main() {
     let data = read_input("input.txt");
-    run_solution(|| get_min_tokens(&data), 1);
+    run_solution(|| get_min_tokens(&data, false), 1);
+    run_solution(|| get_min_tokens(&data, true), 2);
 }
 
-fn get_min_tokens(data: &Vec<[(u32, u32); 3]>) -> u32 {
+fn get_min_tokens(data: &Vec<[(u32, u32); 3]>, fix_conversion_error: bool) -> u64 {
     let mut total = 0;
+    let error_val = 10000000000000.0;
+
     for [(xa, ya), (xb, yb), (xt, yt)] in data {
+        let (true_xt, true_yt) = if fix_conversion_error {
+            (error_val + *xt as f64, error_val + *yt as f64)
+        } else {
+            (*xt as f64, *yt as f64)
+        };
         // Solution to simultaneous equations of:
         // xa*a + xb*b = xt
         // ya*a + yb*b = yt
-        let b: f64 = (*xt as f64 / (*xb as f64 - (*xa as f64 * *yb as f64 / *ya as f64)))
-            - ((*xa as f64 * *yt as f64) / (*xb as f64 * *ya as f64 - *xa as f64 * *yb as f64));
-        let a: f64 = (*xt as f64 - *xb as f64 * b) / *xa as f64;
+        let b: f64 = (true_xt / (*xb as f64 - (*xa as f64 * *yb as f64 / *ya as f64)))
+            - ((*xa as f64 * true_yt) / (*xb as f64 * *ya as f64 - *xa as f64 * *yb as f64));
+        let a: f64 = (true_xt - *xb as f64 * b) / *xa as f64;
 
-        if a > 100.0
-            || b > 100.0
-            // please save me from those floating point errors
-            || (*xa as f64 * a.round() + *xb as f64 * b.round() != *xt as f64)
-            || (*ya as f64 * a.round() + *yb as f64 * b.round() != *yt as f64)
+        if !fix_conversion_error && (a > 100.0 || b > 100.0) {
+            continue;
+        }
+
+        // please save me from those floating point errors
+        if (*xa as f64 * a.round() + *xb as f64 * b.round() != true_xt)
+            || (*ya as f64 * a.round() + *yb as f64 * b.round() != true_yt)
         {
             continue;
         }
 
-        total += 3 * a.round() as u32 + b.round() as u32;
+        total += 3 * a.round() as u64 + b.round() as u64;
     }
     total
 }
