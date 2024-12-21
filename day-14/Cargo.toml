@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 aoc-tools = { version = "0.1.0", path = "../aoc-tools" }
+nalgebra = "0.33.2"
 regex = "1.11.1"
