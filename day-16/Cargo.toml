@@ -1,0 +1,8 @@
+[package]
+name = "day-16"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aoc-tools = { version = "0.1.0", path = "../aoc-tools" }
+nalgebra = "0.33.2"
